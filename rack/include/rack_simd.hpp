@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 // `rack::simd`: four floats at once, as Rack modules that play sixteen
 // channels use them. Plain C++ here (the compiler vectorises what it can):
 // the same values, without tying a module's source to one processor. The

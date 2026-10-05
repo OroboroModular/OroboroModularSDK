@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 /* pffft's interface, as Rack bundles it (Rack's FFTs, and some plugins, use
    it directly): the Oroboro Modular SDK's own code to the same functions
    (rack/src/pffft.cpp), on an FFT of its own. Any length works; the

@@ -4,6 +4,13 @@ What changed in each version of the Oroboro Modular SDK.
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-05
+
+- The Rack bridge (`rack/include`, `rack/src`) is GPL-3.0-or-later with
+  an exception: modules built with it may still be released under any
+  licence, closed-source and commercial included
+  (`rack/LICENSE-EXCEPTION.md`). The rest of the SDK stays MIT.
+
 ## [0.1.2] - 2026-10-05
 
 - `oromod` checks and plays patches with the engine of Oroboro Modular

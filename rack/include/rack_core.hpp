@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 // The basics a Rack 2 module's source expects of `rack.hpp`: the standard
 // headers, the logging macros, `string`, `math` (with Vec and Rect),
 // `random`, `system` and `asset`.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 // `rack::engine`: what a Rack module is made of (its knobs, jacks and
 // lights, how it describes them, and the `process` it's called with each
 // sample), with `rack::Quantity`, which a knob's description builds on.

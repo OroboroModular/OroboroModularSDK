@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 // What the SDK's `rack.hpp` declares and doesn't define in place: strings,
 // logging, random numbers, files, a module's bookkeeping, the FFT, the
 // minBLEP's impulse. The SDK's own code (docs/rack-modules.md).

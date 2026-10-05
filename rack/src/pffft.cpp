@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 // pffft's functions (include/pffft.h): the Oroboro Modular SDK's own FFT
 // behind the interface Rack bundles. A radix-2 transform for powers of two,
 // and Bluestein's chirp-z for any other length (on the next power of two at

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 // Stand-ins for Rack's window: widgets, events, menus, the component
 // library, the window and the app's context. A module built for Oroboro
 // Modular never opens a window of its own (the plugin shows its knobs and

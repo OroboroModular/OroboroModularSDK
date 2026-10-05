@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 // `rack::dsp`: the helpers Rack modules reach for (triggers, pulses,
 // dividers, one-pole and biquad filters, slew limiters, ring buffers, a
 // real FFT, a minBLEP generator, windows, resampling). The SDK's own code, to the same
