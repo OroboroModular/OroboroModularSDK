@@ -1,0 +1,14 @@
+[package]
+name = "fold-module"
+version = "0.1.0"
+edition = "2021"
+description = "An example compiled module for Oroboro Modular: a wavefolder (native/Fold)."
+publish = false
+
+[lib]
+# A native library the plugin loads: Fold.dll, libfold.so, libfold.dylib.
+name = "fold"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+oroboro-module = { path = "../../oroboro-module" }

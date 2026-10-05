@@ -1,0 +1,14 @@
+[package]
+name = "oroboro-module"
+version = "0.1.0"
+edition = "2021"
+description = "Compiled modules for Oroboro Modular, in Rust: implement Module, export it with export_module!, build a cdylib (the module ABI, version 1). Faust-generated Rust, too."
+license = "MIT"
+publish = false
+
+[dependencies]
+
+[features]
+# The ABI's functions as a table (`oroboro_built_in()`) instead of a
+# library's exports: for modules built into one program together.
+built-in = []
