@@ -1,0 +1,16 @@
+{
+  "slug": "OroboroExample",
+  "name": "Oroboro Example",
+  "version": "2.0.0",
+  "license": "MIT",
+  "brand": "Oroboro",
+  "author": "Oroboro",
+  "modules": [
+    {
+      "slug": "Tremor",
+      "name": "Tremor",
+      "description": "A tremolo with its LFO out",
+      "tags": ["Effect", "Low-frequency oscillator"]
+    }
+  ]
+}
