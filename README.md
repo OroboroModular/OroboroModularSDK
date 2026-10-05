@@ -81,5 +81,10 @@ keep working. See [CHANGELOG.md](CHANGELOG.md) for changes.
 
 ## Licence
 
-The SDK is MIT-licensed: see [LICENSE](LICENSE). What you make with it is
+The SDK's source files are MIT-licensed: see [LICENSE](LICENSE). The
+`oromod` program in `bin/` has a licence of its own, `bin/LICENSE.txt`: it's
+free to use, including for modules you sell. What you make with the SDK is
 yours.
+
+VCV Rack is a trademark of VCV. This project isn't affiliated with or
+endorsed by VCV.
