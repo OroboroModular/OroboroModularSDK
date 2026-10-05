@@ -4,6 +4,11 @@ What changed in each version of the Oroboro Modular SDK.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-05
+
+- `oromod` checks and plays patches with the engine of Oroboro Modular
+  1.0.1.
+
 ## [0.1.1] - 2026-10-05
 
 - `oromod` has a licence of its own, `bin/LICENSE.txt`: free to use, for
