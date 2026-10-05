@@ -4,6 +4,13 @@ What changed in each version of the Oroboro Modular SDK.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-05
+
+- `oromod` has a licence of its own, `bin/LICENSE.txt`: free to use, for
+  modules you sell too. The SDK's source files stay MIT.
+- Each archive lists the licences of the third-party code in `oromod`, in
+  `bin/THIRD_PARTY_NOTICES.txt`.
+
 ## [0.1.0] - 2026-10-05
 
 The first release.
