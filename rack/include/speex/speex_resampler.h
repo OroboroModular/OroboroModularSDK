@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 /* The names of speex's resampler that Rack plugins use with Rack's
  * `dsp::SampleRateConverter` (Rack's resampler is speex's, and its header
  * brings these in): the quality levels it takes, and the errors. The SDK's

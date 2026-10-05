@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 // `rack::midi`, `rack::audio` and the MIDI helpers of `rack::dsp`
 // (MidiGenerator, MidiParser): a Rack module's MIDI and audio ports. The
 // SDK's own code, to the same interface as VCV Rack 2's

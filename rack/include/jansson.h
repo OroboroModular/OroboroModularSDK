@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 /*
  * JSON values, with the functions Rack modules use from the Jansson
  * library (they keep their settings as JSON). The Oroboro Modular SDK's

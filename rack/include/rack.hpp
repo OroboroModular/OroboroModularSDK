@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 // `rack.hpp`: what a VCV Rack 2 module's source includes. This one is the
 // Oroboro Modular SDK's: its own code to Rack's plugin interface, so that
 // a Rack module's source compiles unchanged into a module for Oroboro

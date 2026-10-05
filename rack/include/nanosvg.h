@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 // nanosvg's interface, as Rack plugins reach it (Rack draws SVGs with
 // nanosvg, and a plugin may read a picture's shapes through
 // `window::Svg::handle`, or parse an SVG itself). The SDK's own

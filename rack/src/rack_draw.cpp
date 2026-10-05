@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 // What a Rack module's panel code draws (NanoVG's interface, nanovg.h),
 // written down instead of drawn: each fill, stroke, text and picture (an SVG
 // of the module's, `window::svgDraw`) becomes an entry

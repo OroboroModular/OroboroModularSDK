@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 /* blendish's interface, as Rack bundles it (Rack's menus and some plugins'
    widgets draw with it): the Oroboro Modular SDK's own code to the same
    names. It draws plainly through NanoVG: texts are measured and drawn

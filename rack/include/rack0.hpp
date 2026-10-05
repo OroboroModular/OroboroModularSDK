@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 // Rack's <rack0.hpp>: the names Rack 0.x plugins used, for those that still
 // do (a plugin includes it itself). The SDK's own code to the same
 // interface (docs/rack-modules.md).

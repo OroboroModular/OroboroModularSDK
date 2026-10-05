@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH LicenseRef-Oroboro-Rack-Bridge-Exception (rack/LICENSE-EXCEPTION.md)
 // A Rack module as an Oroboro Modular module: the module ABI
 // (native/include/oroboro_module.h) over one model of a Rack plugin's
 // sources. One library holds one module; which model it is, what it's

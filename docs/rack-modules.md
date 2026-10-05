@@ -184,10 +184,17 @@ instead. Mistakes in the file are reported at build time.
 
 ## The licence
 
-A module built from a Rack plugin carries that plugin's licence. Most
-Rack plugins are **GPL-3.0-or-later**: build them for yourself freely,
-but publishing a build means publishing it under the GPL with its source
-available. `oromod rack build` prints the plugin's licence when it
-starts, and `oromod publish` asks for `--source`, a link to the plugin's
-source and the SDK's `rack/` folder at the version you built. Only
+The SDK's Rack bridge (`rack/include` and `rack/src`) is GPL-3.0-or-later
+with an exception: you may build a module with it and release the module
+under any terms you like, closed-source and commercial included. Changes
+you make to the bridge's own files stay under the GPL
+([rack/LICENSE-EXCEPTION.md](../rack/LICENSE-EXCEPTION.md)).
+
+Your module's own code keeps your plugin's licence. Most Rack plugins are
+**GPL-3.0-or-later**: build them for yourself freely, but publishing a
+build means publishing it under the GPL with its source available. A
+closed-source plugin can be published closed, as long as it contains no
+one else's GPL code. `oromod rack build` prints the plugin's licence when it
+starts, and `oromod publish` asks a GPL module for `--source`, a link to
+the plugin's source and the SDK's `rack/` folder at the version you built. Only
 publish someone else's modules with their permission.
