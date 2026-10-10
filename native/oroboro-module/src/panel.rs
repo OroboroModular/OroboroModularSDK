@@ -225,6 +225,19 @@ pub trait Screen: Send + Sync + 'static {
     fn pointer(&self, _event: Pointer) -> bool {
         false
     }
+
+    /// Knob `index` as the screen has turned it, for a screen that turns
+    /// its module's knobs (an equaliser's bands, dragged on its curve):
+    /// kept with atomics the module reads too. The plugin reads them after
+    /// each gesture on the screen and keeps those that moved in the patch.
+    /// A module whose screen answers for one is asked here for all its
+    /// knobs, never itself (it may be playing): answer None for the knobs
+    /// the screen doesn't turn (the panel's, which a cable may be moving),
+    /// and they're left as the patch has them. None for all (the default):
+    /// the screen turns none.
+    fn knob(&self, _index: usize) -> Option<f32> {
+        None
+    }
 }
 
 /// A place on a panel: what (by its number in the spec), its box, and for
