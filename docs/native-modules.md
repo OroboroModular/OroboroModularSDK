@@ -269,3 +269,35 @@ oromod check "dist/Crunch Box.oromodule"
 For macOS, build both architectures, join them with `lipo -create`, and
 add the result with `oromod pack`. `oromod pack` also wraps libraries
 built some other way, such as a C module.
+
+### Every platform at once
+
+With Docker installed, one command in a module's folder (a Rust crate, or
+a Faust source) builds it for Windows and Linux, each for x86-64 and
+ARM64, into one module file:
+
+```powershell
+cd crunch-box
+..\OroboroModularSDK\scripts\build-all.ps1        # Windows
+```
+
+```bash
+cd crunch-box
+../OroboroModularSDK/scripts/build-all.sh          # Linux, macOS, Git Bash
+```
+
+The module file goes to `build/<Name>.oromodule` (give another folder as
+the script's argument, `-Out` in PowerShell). It runs in a container made
+from `docker/Dockerfile`: oromod, Faust 2.88 and the same toolchains the
+SDK's own release is built with (GCC's MinGW for Windows x86-64,
+llvm-mingw for Windows ARM64, GCC for Linux ARM64). The first time, the script makes that
+image, which takes a while; after updating the SDK, run it with
+`--rebuild` (`-Rebuild`). The folder your module and the SDK are both in
+is mounted in the container, so the module's path to the SDK's crate
+(`path = "../OroboroModularSDK/native/oroboro-module"`) holds there; the
+container's builds go to `target/oromod-build`, apart from your own.
+
+A build already in the module file for one of those platforms is
+replaced. macOS needs a Mac (Apple's tools): build there into the same
+file (`oromod build . --out build`), and the file plays everywhere.
+VCV Rack modules aren't built this way yet: build them on each platform.

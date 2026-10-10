@@ -4,6 +4,13 @@ What changed in each version of the Oroboro Modular SDK.
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-10
+
+- `scripts/build-all.ps1` (Windows) and `scripts/build-all.sh` (Linux,
+  macOS) build a Rust or Faust module in Docker for Windows and Linux,
+  each for x86-64 and ARM64, into one module file: run either in the
+  module's folder (docs/native-modules.md, "Every platform at once").
+
 ## [0.1.3] - 2026-10-05
 
 - The Rack bridge (`rack/include`, `rack/src`) is GPL-3.0-or-later with
