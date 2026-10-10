@@ -4,6 +4,15 @@ What changed in each version of the Oroboro Modular SDK.
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-10-10
+
+- A screen can turn its module's knobs: answer `Screen::knob` for them
+  (kept in atomics the module reads), and what's dragged on the screen
+  is heard at once and kept in the patch when it's let go
+  (docs/native-modules.md, "A screen that turns knobs"). Oroboro
+  Modular before 1.1.0 plays such a module but doesn't keep what its
+  screen turns.
+
 ## [0.1.4] - 2026-10-10
 
 - `scripts/build-all.ps1` (Windows) and `scripts/build-all.sh` (Linux,

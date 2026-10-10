@@ -204,6 +204,14 @@ OROBORO_EXPORT uint32_t oroboro_module_pointer(void *module, uint32_t kind, floa
  * own threads. */
 OROBORO_EXPORT uint32_t oroboro_module_live(void);
 
+/* Optional: 1 when this instance's screen turns its knobs (an equaliser's
+ * bands dragged on its curve): its knobs (oroboro_module_get_param) may
+ * then be asked while it plays, from another thread (NaN for one it
+ * doesn't know), and after each gesture on its screen the plugin reads
+ * them and keeps those that moved in the patch. Its state is still asked
+ * only as oroboro_module_live says. */
+OROBORO_EXPORT uint32_t oroboro_module_screen_knobs(void *module);
+
 #ifdef __cplusplus
 }
 #endif

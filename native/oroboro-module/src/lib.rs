@@ -544,6 +544,9 @@ pub mod abi {
     /// audio thread plays the module.
     pub struct Instance<M> {
         screen: Option<Arc<dyn Screen>>,
+        /// Its screen turns its knobs (`Screen::knob`): they're asked of
+        /// the screen, never the module.
+        screen_knobs: bool,
         /// The drawing last given out: the window's thread's, until its next.
         drawn: Mutex<Vec<f32>>,
         inner: UnsafeCell<Inner<M>>,
@@ -597,7 +600,9 @@ pub mod abi {
                 params: spec.params.iter().map(|p| p.default).collect(),
                 text: CString::default(),
             };
-            let instance = Instance { screen, drawn: Mutex::new(Vec::new()), inner: UnsafeCell::new(inner) };
+            let screen_knobs = screen.as_ref().is_some_and(|s| (0..spec.params.len()).any(|i| s.knob(i).is_some()));
+            let instance =
+                Instance { screen, screen_knobs, drawn: Mutex::new(Vec::new()), inner: UnsafeCell::new(inner) };
             Box::into_raw(Box::new(instance)).cast::<c_void>()
         })
         .unwrap_or(std::ptr::null_mut())
@@ -626,6 +631,12 @@ pub mod abi {
     /// # Safety
     /// `m` came from `new::<M>`.
     pub unsafe fn get_param<M: Module>(m: *mut c_void, index: u32) -> f32 {
+        // (a screen that turns the knobs has them: asked of it, as the
+        // module may be playing; NaN for one it doesn't know)
+        let shared = shared::<M>(m);
+        if let (true, Some(screen)) = (shared.screen_knobs, &shared.screen) {
+            return catch_unwind(AssertUnwindSafe(|| screen.knob(index as usize))).ok().flatten().unwrap_or(f32::NAN);
+        }
         let instance = inner::<M>(m);
         let set = instance.params.get(index as usize).copied().unwrap_or(0.0);
         if instance.broken {
@@ -781,6 +792,15 @@ pub mod abi {
         u32::from(catch_unwind(AssertUnwindSafe(|| screen.pointer(event))).unwrap_or(false))
     }
 
+    /// Whether instance `m`'s screen turns its knobs (`Screen::knob`): the
+    /// plugin then reads them back after a gesture on it.
+    ///
+    /// # Safety
+    /// `m` came from `new::<M>`.
+    pub unsafe fn screen_knobs<M: Module>(m: *mut c_void) -> u32 {
+        u32::from(shared::<M>(m).screen_knobs)
+    }
+
     /// # Safety
     /// `m` came from `new::<M>`; `inputs` and `outputs` have as many values
     /// as the spec's inputs and outputs.
@@ -864,6 +884,12 @@ macro_rules! export_module {
                 mods: u32,
             ) -> u32 {
                 $crate::abi::pointer::<$module>(m, kind, x, y, dx, dy, button, mods)
+            }
+
+            /// # Safety
+            /// The ABI's: a module from `oroboro_module_new`.
+            pub unsafe extern "C" fn oroboro_module_screen_knobs(m: *mut ::std::ffi::c_void) -> u32 {
+                $crate::abi::screen_knobs::<$module>(m)
             }
         }
 
@@ -997,7 +1023,7 @@ macro_rules! __built_in {
     () => {
         /// This module's ABI functions, built in (`oroboro-module`'s `built-in` feature).
         pub fn oroboro_built_in() -> $crate::Exports {
-            $crate::__exports!(None, None, None, None, None)
+            $crate::__exports!(None, None, None, None, None, None)
         }
     };
     (panel) => {
@@ -1008,7 +1034,8 @@ macro_rules! __built_in {
                 Some(oroboro_module_art),
                 Some(oroboro_module_lights),
                 Some(oroboro_module_draw),
-                Some(oroboro_module_pointer)
+                Some(oroboro_module_pointer),
+                Some(oroboro_module_screen_knobs)
             )
         }
     };
@@ -1018,7 +1045,7 @@ macro_rules! __built_in {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __exports {
-    ($panel:expr, $art:expr, $lights:expr, $draw:expr, $pointer:expr) => {
+    ($panel:expr, $art:expr, $lights:expr, $draw:expr, $pointer:expr, $screen_knobs:expr) => {
         $crate::Exports {
             abi: oroboro_module_abi,
             spec: oroboro_module_spec,
@@ -1039,6 +1066,7 @@ macro_rules! __exports {
             lights: $lights,
             draw: $draw,
             pointer: $pointer,
+            screen_knobs: $screen_knobs,
         }
     };
 }
@@ -1069,6 +1097,8 @@ pub struct Exports {
     pub draw: Option<unsafe extern "C" fn(*mut c_void, *mut u32) -> *const f32>,
     #[allow(clippy::type_complexity)]
     pub pointer: Option<unsafe extern "C" fn(*mut c_void, u32, f32, f32, f32, f32, u32, u32) -> u32>,
+    /// Its screen turns its knobs (`oroboro_module_screen_knobs`).
+    pub screen_knobs: Option<unsafe extern "C" fn(*mut c_void) -> u32>,
 }
 
 #[cfg(test)]
@@ -1236,6 +1266,78 @@ mod tests {
             assert_eq!(out, [-1.0]);
             abi::free::<Doubler>(other);
             abi::free::<Doubler>(m);
+        }
+    }
+
+    /// A level whose screen turns its knob: a drag up turns it up, the
+    /// module plays what the screen has, and the knob is read of the screen.
+    struct Level {
+        knob: Arc<Knob>,
+    }
+
+    struct Knob(std::sync::atomic::AtomicU32);
+
+    impl Knob {
+        fn get(&self) -> f32 {
+            f32::from_bits(self.0.load(std::sync::atomic::Ordering::Relaxed))
+        }
+        fn set(&self, v: f32) {
+            self.0.store(v.to_bits(), std::sync::atomic::Ordering::Relaxed)
+        }
+    }
+
+    impl Screen for Knob {
+        fn draw(&self, _d: &mut Drawing) {}
+        fn pointer(&self, event: Pointer) -> bool {
+            if let Pointer::Move { dy, .. } = event {
+                self.set((self.get() - dy / 100.0).clamp(0.0, 1.0));
+            }
+            true
+        }
+        fn knob(&self, index: usize) -> Option<f32> {
+            (index == 0).then(|| self.get())
+        }
+    }
+
+    impl Module for Level {
+        fn spec() -> Spec {
+            Spec::new("native/Level").input("In").output("Out").param(Param::new("Gain", 0.0, 1.0, 0.5)).param(Param::new("Unknown", 0.0, 1.0, 0.0))
+        }
+        fn new(_sample_rate: f32) -> Self {
+            Level { knob: Arc::new(Knob(0.5f32.to_bits().into())) }
+        }
+        fn set_param(&mut self, index: usize, value: f32) {
+            if index == 0 {
+                self.knob.set(value);
+            }
+        }
+        fn tick(&mut self, inputs: &[f32], outputs: &mut [f32]) {
+            outputs[0] = inputs[0] * self.knob.get();
+        }
+        fn screen(&self) -> Option<Arc<dyn Screen>> {
+            Some(self.knob.clone() as Arc<dyn Screen>)
+        }
+    }
+
+    #[test]
+    fn a_screen_that_turns_a_knob_has_it() {
+        unsafe {
+            let m = abi::new::<Level>(48_000.0);
+            assert_eq!(abi::screen_knobs::<Level>(m), 1);
+            abi::set_param::<Level>(m, 0, 0.25);
+            assert_eq!(abi::get_param::<Level>(m, 0), 0.25);
+            // dragged 50 up on the screen: half way further, played at once
+            assert_eq!(abi::pointer::<Level>(m, 3, 10.0, 10.0, 0.0, -50.0, 0, 0), 1);
+            assert_eq!(abi::get_param::<Level>(m, 0), 0.75);
+            let mut out = [0.0f32];
+            abi::tick::<Level>(m, [2.0f32].as_ptr(), out.as_mut_ptr());
+            assert_eq!(out, [1.5]);
+            assert!(abi::get_param::<Level>(m, 1).is_nan(), "a knob the screen doesn't know");
+            abi::free::<Level>(m);
+            // a module whose screen turns none is asked itself
+            let d = abi::new::<Doubler>(48_000.0);
+            assert_eq!((abi::screen_knobs::<Doubler>(d), abi::get_param::<Doubler>(d, 0)), (0, 2.0));
+            abi::free::<Doubler>(d);
         }
     }
 }

@@ -186,6 +186,32 @@ impl Screen for ScopeScreen {
 adapts its colours to the theme. `lights` is called on the audio thread,
 between samples.
 
+#### A screen that turns knobs
+
+A screen can be where the module is played: an equaliser's bands dragged
+on its curve, a compressor's thresholds. Keep those knobs in the shared
+handle (atomics), have `set_param` write them there and `tick` read them
+from there, and answer `Screen::knob` for the knobs the screen turns:
+
+```rust
+impl Screen for EqScreen {
+    // draw, pointer: a drag moves a band's frequency and gain in `self.knobs`
+    fn knob(&self, index: usize) -> Option<f32> {
+        // the bands' knobs; None for Output, a knob on the panel
+        (FIRST_BAND..KNOBS).contains(&index).then(|| self.knobs[index].get())
+    }
+}
+```
+
+None for a knob on the panel: a cable may be moving it while the screen
+is dragged, and only what the screen turned is kept.
+
+A drag is heard at once (the module reads what the screen wrote). When
+it's let go (or a click ends), the plugin reads every knob from the
+screen and keeps the ones that moved in the patch, one step to undo; it
+never asks the module itself, which may be playing. The plugin's other
+voices take them then too.
+
 The Spectrum Analyser (`native/Oroboro/Spectrum`, built into the plugin)
 uses all of this. Its source is in
 [OroboroModularModules](https://github.com/OroboroModular/OroboroModularModules/tree/main/SpectrumAnalyser).
