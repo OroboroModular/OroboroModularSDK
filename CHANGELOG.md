@@ -4,6 +4,14 @@ What changed in each version of the Oroboro Modular SDK.
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-10-11
+
+- `oromod` reads, checks and renders patches with the engine of Oroboro
+  Modular 1.2.0: it knows the new Note Out and CC Out modules, the In
+  module's Source and the Out module's Out 2, 3 and 4, and a patch from
+  before whose VCO, Wavetable, Comb or Notch used its FM knob or input
+  reads as the plugin reads it now.
+
 ## [0.1.5] - 2026-10-10
 
 - A screen can turn its module's knobs: answer `Screen::knob` for them
