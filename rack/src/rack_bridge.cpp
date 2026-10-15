@@ -193,19 +193,24 @@ std::string signalOf(bool input, size_t index, const std::string& full, const st
 }
 
 /// A module of the plugin's model, made with its MIDI inputs on `midi`
-/// (the device the plugin's MIDI comes to; null: none).
-engine::Module* make(plugin::Model* m, midi::InputDevice* midi) {
+/// (the device the plugin's MIDI comes to; null: none) and its MIDI
+/// outputs on `midiOut` (what it sends out of the plugin; null: none).
+engine::Module* make(plugin::Model* m, midi::InputDevice* midi, midi::OutputDevice* midiOut = nullptr) {
 	midi::InputDevice*& making = midi::oroboroMaking();
+	midi::OutputDevice*& makingOut = midi::oroboroMakingOut();
 	making = midi;
+	makingOut = midiOut;
 	engine::Module* module = nullptr;
 	try {
 		module = m->createModule();
 	}
 	catch (...) {
 		making = nullptr;
+		makingOut = nullptr;
 		throw;
 	}
 	making = nullptr;
+	makingOut = nullptr;
 	return module;
 }
 
@@ -218,10 +223,12 @@ std::string interface() {
 	if (!m)
 		return "{}";
 	midi::InputDevice midiDevice;
-	std::unique_ptr<engine::Module> module(make(m, &midiDevice));
+	midi::OroboroOutputDevice midiOutDevice;
+	std::unique_ptr<engine::Module> module(make(m, &midiDevice, &midiOutDevice));
 	if (!module)
 		return "{}";
 	bool takesMidi = !midiDevice.subscribed.empty();
+	bool sendsMidi = !midiOutDevice.subscribed.empty();
 
 	std::vector<std::string> knobs;
 	std::string params;
@@ -328,13 +335,15 @@ std::string interface() {
 		vendor = ", \"vendor\": " + jsonText(oroboro_rack_vendor);
 	return "{\"module\": " + jsonText(oroboro_rack_module) + ", \"category\": " + jsonText(oroboro_rack_category) + ", \"inputs\": [" + inputs
 		+ "], \"outputs\": [" + outputs + "], \"params\": [" + params + "], \"source_hash\": null" + vendor
-		+ (takesMidi ? ", \"midi\": true" : "") + "}";
+		+ (takesMidi ? ", \"midi\": true" : "") + (sendsMidi ? ", \"midi_out\": true" : "") + "}";
 }
 
 /// One instance: a Rack module, and what it's called with.
 struct Instance {
 	/// Where the plugin's MIDI comes to: its MIDI inputs are on it.
 	std::unique_ptr<midi::InputDevice> midi{new midi::InputDevice};
+	/// What it sends out of the plugin: its MIDI outputs send there.
+	std::unique_ptr<midi::OroboroOutputDevice> midiOut{new midi::OroboroOutputDevice};
 	engine::Module* module = nullptr;
 	engine::Module::ProcessArgs args = {};
 	/// It threw once: silent from then on.
@@ -602,7 +611,7 @@ OROBORO_EXPORT void* oroboro_module_new(float sample_rate) {
 		APP->engine->sampleRate = sample_rate;
 		settings::sampleRate = sample_rate;
 		std::unique_ptr<Instance> instance(new Instance);
-		instance->module = make(m, instance->midi.get());
+		instance->module = make(m, instance->midi.get(), instance->midiOut.get());
 		if (!instance->module)
 			return nullptr;
 		engine::Module* module = instance->module;
@@ -1170,6 +1179,23 @@ OROBORO_EXPORT void oroboro_module_menu_choose(void* m, uint32_t id, float value
 	}
 	for (ui::Menu* sub : opened)
 		delete sub;
+}
+
+/// What its last tick sent out of the plugin (its MIDI outputs'), four
+/// bytes a message (its size, then its bytes), as many as `room`.
+OROBORO_EXPORT uint32_t oroboro_module_midi_out(void* m, uint8_t* out, uint32_t room) {
+	Instance* instance = static_cast<Instance*>(m);
+	if (!instance || !out)
+		return 0;
+	midi::OroboroOutputDevice& sent = *instance->midiOut;
+	uint32_t count = std::min<uint32_t>(room, (uint32_t) sent.count);
+	for (uint32_t k = 0; k < count; k++) {
+		out[4 * k] = sent.sizes[k];
+		for (int i = 0; i < 3; i++)
+			out[4 * k + 1 + i] = i < sent.sizes[k] ? sent.bytes[k][i] : 0;
+	}
+	sent.count = 0;
+	return count;
 }
 
 OROBORO_EXPORT void oroboro_module_midi(void* m, const uint8_t* message, uint32_t size) {

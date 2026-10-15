@@ -103,19 +103,44 @@ struct OutputDevice : Device {
 	virtual void sendMessage(const Message& message) {}
 };
 
-/// The one driver: the plugin's MIDI, which has one input device (its
-/// instance's own, so its id is the same for every instance).
+/// What an instance sends out of the plugin: the messages its outputs
+/// send in a tick, kept (as many as `ROOM`; more are dropped) till the
+/// plugin takes them after it (`oroboro_module_midi_out`).
+struct OroboroOutputDevice : OutputDevice {
+	static const int ROOM = 64;
+	uint8_t sizes[ROOM] = {};
+	uint8_t bytes[ROOM][3] = {};
+	int count = 0;
+	void sendMessage(const Message& message) override {
+		int size = message.getSize();
+		if (count >= ROOM || size < 1 || size > 3 || !(message.bytes[0] & 0x80))
+			return;
+		sizes[count] = (uint8_t) size;
+		for (int i = 0; i < size; i++)
+			bytes[count][i] = message.bytes[i];
+		count++;
+	}
+};
+
+/// The one driver: the plugin's MIDI, which has one input device and one
+/// output device (its instance's own, so their ids are the same for every
+/// instance).
 static const int OROBORO_DRIVER_ID = 1001;
 struct OroboroDriver : Driver {
 	std::string getName() override { return "Oroboro Modular"; }
 	std::vector<int> getInputDeviceIds() override { return {0}; }
 	int getDefaultInputDeviceId() override { return 0; }
 	std::string getInputDeviceName(int deviceId) override { return deviceId == 0 ? "Oroboro Modular" : ""; }
+	std::vector<int> getOutputDeviceIds() override { return {0}; }
+	int getDefaultOutputDeviceId() override { return 0; }
+	std::string getOutputDeviceName(int deviceId) override { return deviceId == 0 ? "Oroboro Modular" : ""; }
 };
 Driver* oroboroDriver();
 /// The input device of the instance being made (the bridge sets it while
 /// the module's constructor runs): the MIDI inputs made then are on it.
 InputDevice*& oroboroMaking();
+/// Its output device, the same way: the MIDI outputs made then send there.
+OutputDevice*& oroboroMakingOut();
 
 inline void addDriver(int driverId, Driver* driver) { delete driver; }
 inline std::vector<int> getDriverIds() { return {OROBORO_DRIVER_ID}; }
@@ -237,21 +262,53 @@ struct InputQueue : Input {
 
 struct Output : Port {
 	OutputDevice* outputDevice = nullptr;
-	Output() { channel = 0; }
+	/// Its instance's device, which it's on unless it's set to none.
+	OutputDevice* oroboroDevice = nullptr;
+
+	Output() {
+		channel = 0;
+		oroboroDevice = oroboroMakingOut();
+		if (oroboroDevice) {
+			driverId = OROBORO_DRIVER_ID;
+			driver = oroboroDriver();
+			setDeviceId(0);
+		}
+	}
+	Output(const Output&) = delete;
+	Output& operator=(const Output&) = delete;
+	~Output() { setDeviceId(-1); }
 	void reset() { channel = 0; }
-	std::vector<int> getDeviceIds() override { return {}; }
-	int getDefaultDeviceId() override { return -1; }
-	void setDeviceId(int deviceId) override { this->deviceId = deviceId; }
-	std::string getDeviceName(int deviceId) override { return ""; }
+	std::vector<int> getDeviceIds() override { return oroboroDevice ? std::vector<int>{0} : std::vector<int>{}; }
+	int getDefaultDeviceId() override { return oroboroDevice ? 0 : -1; }
+	/// 0: out of the plugin; -1: nowhere.
+	void setDeviceId(int deviceId) override {
+		if (outputDevice)
+			outputDevice->unsubscribe(this);
+		outputDevice = nullptr;
+		device = nullptr;
+		this->deviceId = -1;
+		if (deviceId == 0 && oroboroDevice) {
+			outputDevice = oroboroDevice;
+			device = outputDevice;
+			outputDevice->subscribe(this);
+			this->deviceId = 0;
+		}
+	}
+	std::string getDeviceName(int deviceId) override { return deviceId == 0 && oroboroDevice ? "Oroboro Modular" : ""; }
 	std::vector<int> getChannels() override {
 		std::vector<int> channels;
 		for (int c = 0; c < 16; c++)
 			channels.push_back(c);
 		return channels;
 	}
+	/// On its channel, as Rack's does (but system messages).
 	void sendMessage(const Message& message) {
-		if (outputDevice)
-			outputDevice->sendMessage(message);
+		if (!outputDevice)
+			return;
+		Message msg = message;
+		if (msg.getStatus() != 0xf && channel >= 0)
+			msg.setChannel((uint8_t) channel);
+		outputDevice->sendMessage(msg);
 	}
 };
 

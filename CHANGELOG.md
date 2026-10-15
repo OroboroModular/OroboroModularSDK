@@ -4,6 +4,17 @@ What changed in each version of the Oroboro Modular SDK.
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-10-15
+
+- `oromod` reads, checks and renders patches with the engine of Oroboro
+  Modular 1.3.0: it knows the Utilities modules (Math, Compare, Counter,
+  Flip, Pulse), the Expr module's lines and its four outputs, and an LFO
+  locked to a stopped clock runs on as the plugin's does.
+- A module can send MIDI out of Oroboro Modular (1.3.0 and later):
+  `Spec::midi_out()` and `Module::midi_out(send)` in Rust, and a Rack
+  module's `midi::Output` (on the output's channel). `oromod check` says
+  what a module sends (docs/native-modules.md, docs/rack-modules.md).
+
 ## [0.1.6] - 2026-10-11
 
 - `oromod` reads, checks and renders patches with the engine of Oroboro
