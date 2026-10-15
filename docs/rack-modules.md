@@ -93,6 +93,7 @@ the plugin:
 | `osdialog` file dialogs | The system's dialogs (Windows; Linux and macOS not yet) |
 | `isConnected()` | True when a cable (or the keyboard, for `V/Oct`) feeds the input |
 | `midi::Input` | The plugin's MIDI. In the voice area each instance gets its own voice's notes. |
+| `midi::Output` | Out of the plugin, on the output's channel: the DAW routes it on. In the voice area each instance sends its own. |
 | `rack::dsp`, `simd::float_4`, `random`, `string`, `math`, `json_t` | All there |
 
 Voltages are the same as Rack's: about ±5 V audio, 10 V gates, 1 V per
@@ -179,7 +180,7 @@ instead. Mistakes in the file are reported at build time.
 - Expanders: a patch has no "next to"
 - Files from your plugin's `res/` folder other than panel SVGs (samples,
   presets) aren't packed with the module
-- Network access, MIDI out and audio devices
+- Network access, MIDI devices of your own and audio devices
 - The rack around a module: no neighbours, cables, clipboard or undo
 
 ## The licence

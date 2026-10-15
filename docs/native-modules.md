@@ -66,6 +66,7 @@ reverb in Rust.
 | `tick(inputs, outputs)` | One sample: read every input, write every output. |
 | `connected(inputs)` | Optional. Which inputs have a cable, for modules that behave differently without one (an internal clock when nothing is at Clock). |
 | `midi(message)` | Optional, with `Spec::midi()`. One MIDI message, just before the sample it belongs to. In the voice area each instance gets its own voice's notes plus every channel's other messages; in the FX area, everything. |
+| `midi_out(send)` | Optional, with `Spec::midi_out()`. After each `tick`, hand `send` the MIDI messages that tick made (1 to 3 bytes each, status and channel first): they go out of the plugin at that sample, as its own Note Out's do. In the voice area each instance sends its own; sixteen a sample at most. |
 | `state()`, `set_state(text)` | Optional. Anything the module saves beyond its knobs, as text. Stored with the patch. |
 | `menu()`, `choose(id, value)` | Optional. Your own options in the module's right-click menu. |
 
@@ -241,6 +242,8 @@ void        oroboro_module_tick(void *m, const float *inputs, float *outputs);
 // optional
 void        oroboro_module_connected(void *m, const uint8_t *inputs, uint32_t count);
 void        oroboro_module_midi(void *m, const uint8_t *message, uint32_t size);
+// after each tick: up to `room` messages into `out`, four bytes each (size, then bytes); how many
+uint32_t    oroboro_module_midi_out(void *m, uint8_t *out, uint32_t room);
 const char *oroboro_module_get_state(void *m);
 void        oroboro_module_set_state(void *m, const char *state);
 float       oroboro_module_get_param(void *m, uint32_t index);

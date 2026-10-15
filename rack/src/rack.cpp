@@ -567,6 +567,10 @@ InputDevice*& oroboroMaking() {
 	static thread_local InputDevice* making = nullptr;
 	return making;
 }
+OutputDevice*& oroboroMakingOut() {
+	static thread_local OutputDevice* making = nullptr;
+	return making;
+}
 } // namespace midi
 
 // ---- plugin --------------------------------------------------------------------------------

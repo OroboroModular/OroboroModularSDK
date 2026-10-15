@@ -256,6 +256,8 @@ pub struct Spec {
     pub vendor: String,
     /// It takes MIDI ([`Module::midi`]): the plugin gives it what it gets.
     pub midi: bool,
+    /// It sends MIDI ([`Module::midi_out`]): the plugin passes it on.
+    pub midi_out: bool,
     /// What each input carries where its maker says ([`Spec::input_as`]),
     /// one per input (none: the plugin goes by its name).
     pub input_signals: Vec<Option<Signal>>,
@@ -297,6 +299,7 @@ impl Spec {
             source_hash: None,
             vendor: String::new(),
             midi: false,
+            midi_out: false,
             input_signals: Vec::new(),
             output_signals: Vec::new(),
         }
@@ -307,6 +310,14 @@ impl Spec {
     /// messages; in the FX area all of them).
     pub fn midi(mut self) -> Spec {
         self.midi = true;
+        self
+    }
+
+    /// It sends MIDI: what [`Module::midi_out`] hands over after each
+    /// `tick` goes out of the plugin, as the plugin's own modules' MIDI
+    /// does (in the voice area each voice's instance sends its own).
+    pub fn midi_out(mut self) -> Spec {
+        self.midi_out = true;
         self
     }
 
@@ -424,9 +435,10 @@ impl Spec {
             false => format!(", \"vendor\": {}", text(self.vendor.trim())),
         };
         let midi = if self.midi { ", \"midi\": true" } else { "" };
+        let midi_out = if self.midi_out { ", \"midi_out\": true" } else { "" };
         format!(
             "{{\"module\": {}, \"category\": {}, \"inputs\": {inputs}, \"outputs\": {outputs}, \"params\": {params}, \
-             \"source_hash\": {hash}{vendor}{midi}}}",
+             \"source_hash\": {hash}{vendor}{midi}{midi_out}}}",
             text(&self.full_name()),
             text(&self.category)
         )
@@ -461,6 +473,13 @@ pub trait Module: Send + 'static {
     /// module whose spec says it takes MIDI ([`Spec::midi`]): on the audio
     /// thread, before the `tick` of the sample it falls on.
     fn midi(&mut self, _message: &[u8]) {}
+
+    /// The MIDI messages its last `tick` made, for a module whose spec says
+    /// it sends MIDI ([`Spec::midi_out`]): hand each to `send` (a status
+    /// byte with its channel, and its data: 1 to 3 bytes), and forget them.
+    /// Asked after every `tick`, on the audio thread; sixteen at most a
+    /// sample go out (more are dropped).
+    fn midi_out(&mut self, _send: &mut dyn FnMut(&[u8])) {}
 
     /// One sample: `inputs` as many as the spec's inputs, `outputs` as many
     /// as its outputs (write each).
@@ -735,6 +754,32 @@ pub mod abi {
         }
     }
 
+    /// # Safety
+    /// `m` came from `new::<M>`; `out` has room for `room` messages of four
+    /// bytes (a message's size, then its bytes).
+    pub unsafe fn midi_out<M: Module>(m: *mut c_void, out: *mut u8, room: u32) -> u32 {
+        let instance = inner::<M>(m);
+        if out.is_null() || room == 0 || instance.broken {
+            return 0;
+        }
+        let room = std::slice::from_raw_parts_mut(out, 4 * room as usize);
+        let mut count = 0;
+        let sent = catch_unwind(AssertUnwindSafe(|| {
+            instance.module.midi_out(&mut |message| {
+                if let Some(slot) = room.chunks_exact_mut(4).nth(count).filter(|_| (1..=3).contains(&message.len())) {
+                    slot[0] = message.len() as u8;
+                    slot[1..1 + message.len()].copy_from_slice(message);
+                    count += 1;
+                }
+            })
+        }));
+        if sent.is_err() {
+            instance.broken = true;
+            return 0;
+        }
+        count as u32
+    }
+
     pub fn panel_json<M: Module>() -> CString {
         let json = catch_unwind(|| M::panel().map(|p| p.to_json())).ok().flatten().unwrap_or_default();
         CString::new(json.replace('\0', "")).unwrap_or_default()
@@ -958,6 +1003,13 @@ macro_rules! __export_base {
             }
 
             /// # Safety
+            /// The ABI's: a module from `oroboro_module_new`, room for `room`
+            /// messages of four bytes.
+            pub unsafe extern "C" fn oroboro_module_midi_out(m: *mut ::std::ffi::c_void, out: *mut u8, room: u32) -> u32 {
+                $crate::abi::midi_out::<$module>(m, out, room)
+            }
+
+            /// # Safety
             /// The ABI's: a module from `oroboro_module_new`.
             pub unsafe extern "C" fn oroboro_module_get_param(m: *mut ::std::ffi::c_void, index: u32) -> f32 {
                 $crate::abi::get_param::<$module>(m, index)
@@ -1056,6 +1108,7 @@ macro_rules! __exports {
             tick: oroboro_module_tick,
             connected: oroboro_module_connected,
             midi: oroboro_module_midi,
+            midi_out: oroboro_module_midi_out,
             get_param: oroboro_module_get_param,
             get_state: oroboro_module_get_state,
             set_state: oroboro_module_set_state,
@@ -1086,6 +1139,8 @@ pub struct Exports {
     pub tick: unsafe extern "C" fn(*mut c_void, *const f32, *mut f32),
     pub connected: unsafe extern "C" fn(*mut c_void, *const u8, u32),
     pub midi: unsafe extern "C" fn(*mut c_void, *const u8, u32),
+    /// The MIDI it sends (`oroboro_module_midi_out`).
+    pub midi_out: unsafe extern "C" fn(*mut c_void, *mut u8, u32) -> u32,
     pub get_param: unsafe extern "C" fn(*mut c_void, u32) -> f32,
     pub get_state: unsafe extern "C" fn(*mut c_void) -> *const c_char,
     pub set_state: unsafe extern "C" fn(*mut c_void, *const c_char),
@@ -1163,6 +1218,12 @@ mod tests {
                 }
             }
         }
+        // (its gain as a controller, each tick: 4 is 127; and a message the
+        // ABI hasn't room for, and one too long, dropped)
+        fn midi_out(&mut self, send: &mut dyn FnMut(&[u8])) {
+            send(&[0xB0, 7, (self.gain / 4.0 * 127.0).round().clamp(0.0, 127.0) as u8]);
+            send(&[0xB0, 7, 0, 0]);
+        }
     }
 
     #[test]
@@ -1192,10 +1253,12 @@ mod tests {
             json.contains("\"inputs\": [{\"name\": \"In\"}, {\"name\": \"Kick\", \"signal\": \"logic\"}], \"outputs\": [{\"name\": \"Env\", \"signal\": \"control\"}, \"Out\"]"),
             "{json}"
         );
-        // one that takes MIDI says so
+        // one that takes MIDI says so, and one that sends it
         let json = Spec::new("native/X").vendor("Acme").midi().to_json();
         assert!(json.ends_with("\"vendor\": \"Acme\", \"midi\": true}"), "{json}");
         assert!(!Spec::new("native/X").to_json().contains("midi"));
+        let json = Spec::new("native/X").vendor("Acme").midi().midi_out().to_json();
+        assert!(json.ends_with("\"midi\": true, \"midi_out\": true}"), "{json}");
         // a selector names its positions
         let json = Spec::new("native/X").param(Param::choice("Wave", &["Sine", "Saw"], 1)).to_json();
         assert!(
@@ -1222,6 +1285,11 @@ mod tests {
             abi::midi::<Doubler>(m, [0x90u8, 60, 1, 0].as_ptr(), 4);
             abi::tick::<Doubler>(m, [0.5f32].as_ptr(), out.as_mut_ptr());
             assert_eq!(out, [2.0]);
+            // what it sends: four bytes a message, as many as there's room for
+            let mut room = [0u8; 8];
+            assert_eq!(abi::midi_out::<Doubler>(m, room.as_mut_ptr(), 2), 1);
+            assert_eq!(room[..4], [3, 0xB0, 7, 127]);
+            assert_eq!(abi::midi_out::<Doubler>(m, room.as_mut_ptr(), 0), 0, "no room");
             let hook = std::panic::take_hook();
             std::panic::set_hook(Box::new(|_| {}));
             abi::set_param::<Doubler>(m, 0, -1.0);
