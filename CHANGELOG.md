@@ -4,6 +4,33 @@ What changed in each version of the Oroboro Modular SDK.
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-10-16
+
+- `oromod` reads, checks and renders patches with the engine of Oroboro
+  Modular 1.4.0: it knows the Expr module's new functions (`asin`,
+  `acos`, `atan`, `sinh`, `cosh`, `log10`, `rand(a, b)`) and `noise`.
+- A module file can carry the module's documentation, a page of
+  Markdown that Oroboro Modular shows from the **?** beside the module:
+  `oromod build` takes `docs.md` from the crate's folder, `oromod faust
+  build` `<Name>.md` beside the source, `oromod rack build`
+  `oroboro/<Slug>.md`, and `oromod pack` a file given with `--docs`.
+  `oromod check` says it's there (docs/native-modules.md, "Its
+  documentation").
+- A build added to a module file keeps what the file says of the module
+  (its description, licence, web page, documentation) unless the new
+  build says otherwise: a `--version` alone dropped the rest.
+- `oromod check` passes a patch with the compiled modules built into
+  Oroboro Modular (Doppler, Tape, EQ …, `native/Oroboro/…`): it says
+  they play in the plugin and not in its renders, where it called them
+  modules it skips.
+- `oromod check` notes a VCO or Wavetable (in either area, or a part of a
+  composite) with a cable into its FM whose values stop before its
+  hidden FM knob (knob 3): Oroboro Modular reads that as a patch from
+  before the knob was hidden, at 0, and mutes the cable. Stored as 1
+  (`[tune, fine, kbt, 1, …]`), the cable's amount sets how deep the FM
+  goes; stored as anything else, the note says how far it turns the
+  cables down.
+
 ## [0.1.7] - 2026-10-15
 
 - `oromod` reads, checks and renders patches with the engine of Oroboro

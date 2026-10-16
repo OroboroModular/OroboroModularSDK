@@ -299,6 +299,58 @@ For macOS, build both architectures, join them with `lipo -create`, and
 add the result with `oromod pack`. `oromod pack` also wraps libraries
 built some other way, such as a C module.
 
+### Its documentation
+
+A module file can carry the module's documentation: a page of Markdown,
+which Oroboro Modular shows when a musician clicks the **?** beside the
+module (in the module browser, the right-click menu and the list under a
+module's name) or **What it does** in its menu. Without one, the plugin
+makes a page of the module's jacks and knobs.
+
+oromod takes the page from a file beside the module's source as it builds:
+
+| Built from | The page |
+|---|---|
+| A Rust crate (`oromod build`) | `docs.md` in the crate's folder |
+| A Faust source (`oromod faust build`) | `<Name>.md` beside `<Name>.dsp` |
+| A VCV Rack plugin (`oromod rack build`) | `oroboro/<Slug>.md`, beside its `oroboro/<Slug>.json` |
+| Any library (`oromod pack`) | `--docs <file>` |
+
+A build added to the module file later keeps the page (and the
+description, licence and web page) it has. `oromod check` says how long
+the page is ("documentation: 40 lines"), and the Community Library keeps
+it with the module.
+
+Write it as Oroboro Modular's own modules' pages are written (its
+`docs/modules/`): a header `# <Category> / <Module>`, a short
+description, then `## Inputs`, `## Outputs` and `## Knobs` as tables,
+`## Technical details` as a list, and `## Tips`:
+
+```markdown
+# Shapers / Crunch Box
+
+A wavefolder with a soft clipper after it.
+
+## Inputs
+
+| Jack | Signal | What it does |
+|---|---|---|
+| In | Audio | The sound to fold, about ±5 V. |
+
+## Knobs
+
+| Knob | Range | Default | What it does |
+|---|---|---|---|
+| Fold | 0 to 10 | 1 | How many times the wave folds back. |
+
+## Technical details
+
+- Folds past ±5 V with a sine-shaped fold, anti-aliased.
+```
+
+The plugin draws headings, paragraphs, lists, tables, **bold**,
+*italics* and `code`; anything else shows as its plain text.
+
 ### Every platform at once
 
 With Docker installed, one command in a module's folder (a Rust crate, or
