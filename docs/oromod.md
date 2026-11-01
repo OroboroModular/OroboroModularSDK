@@ -27,6 +27,25 @@ exits with an error if anything is wrong:
   platforms it has builds for, whether the Community Library would accept
   it, and a check of this platform's build.
 - **`.orobundle`**: each module in it, with its platforms.
+- **`.json`**: a patch (what the plugin would skip or misread: modules it
+  hasn't got, cables to jacks that aren't there, knob values out of
+  range …), or a composite module.
+- **`.oroproject`**: a project of layers (patch-format.md, "Projects"):
+  each layer's patch and the master's, as a patch is checked; the layers'
+  levels and MIDI channels; that the master hears the layers (an `oro/In`
+  set to FX in its FX area); and every LayerIn's link, to a layer the
+  project has and a LayerOut there sending as the name it hears, saying
+  whether it comes in the same block or a block late.
+
+## `oromod render PATCH -o OUT.wav [--notes 60,64] [--hold S] [--seconds S] [--rate HZ] [--channel N]`
+
+Plays a patch, or a project, and writes a 32-bit float stereo WAV,
+printing its peak. The notes are held together from the start for
+`--hold` seconds. A project plays as the plugin plays it: its layers in
+their numbers' order, each at its level (a muted one plays on, unheard),
+the notes to the layers that hear `--channel` (1 by default) or every
+channel, their main outputs through the master's FX area, their Out 2–4
+past it, and LayerIns hearing what the LayerOuts send.
 
 ## `oromod new faust NAME [--dir DIR] [--vendor VENDOR]`
 

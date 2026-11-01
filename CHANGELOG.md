@@ -4,6 +4,27 @@ What changed in each version of the Oroboro Modular SDK.
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-11-01
+
+- `oromod` reads, checks and renders patches with the engine of Oroboro
+  Modular 1.7.0: it knows the modules added since (Shape, Pan,
+  Crossfade, Distortion, Dynamics, PitchShift, Convolver, Limiter, Gate,
+  Transient, Ensemble, Flanger, Disperser, Formant, Crossover, TranceGate,
+  GraphicEQ, TapeStop, Crush, PhaseDist, PitchTrack), the new knobs and
+  jacks of the VCO, Wavetable, ADSR, Noise, VCA, Delay, Plate and Sampler,
+  and MP3, Ogg Vorbis, FLAC and AIFF samples and tables.
+- `oromod check` and `oromod render` take **projects** (`.oroproject`):
+  several patches as layers under a master effects patch. The check
+  checks each layer's patch and the master's, and every LayerIn's link (a
+  layer the project has, a LayerOut there sending as the name it hears);
+  the render plays the layers as the plugin does, LayerOuts into LayerIns,
+  the master over their mix. `--channel` picks the MIDI channel the notes
+  play on. docs/patch-format.md, "Projects".
+- A patch imported into Oroboro Modular names the files it plays in your
+  samples folder (`samples:Imported/…`). `oromod check` and `oromod
+  publish` treat them as samples: if one isn't there, that's a note and
+  not an error, and they're never published with the patch.
+
 ## [0.1.8] - 2026-10-16
 
 - `oromod` reads, checks and renders patches with the engine of Oroboro
